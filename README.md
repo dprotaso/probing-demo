@@ -11,7 +11,7 @@ Probes are used to determine Pod readiness and they currently have a lower-bound
 
 The Knative community would benefit from this KEP in order to reduce our cold start times.
 
-### Knative workaround
+## Knative workaround
 
 Knative currently works around this problem by delagating probing to a sidecar. The user's readinessProbe is rewritten to point to the sidecar. When the kubelet performs a probe the sidecar will loop and probe the user container at a more aggressively (~20ms) interval. This occurs until a timeout occurs or the user container becomes ready. Using a sidecar allows us to 
 
