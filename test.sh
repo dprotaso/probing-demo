@@ -5,7 +5,7 @@ set -o pipefail
 set -x
 
 K8S_VERSION=v1.19.7
-START_DELAY=800ms
+START_DELAY=1100ms
 SCRATCH=$(mktemp -d)
 
 cat > $SCRATCH/config <<EOF
@@ -27,24 +27,6 @@ EOF
 fi
 
 source images.env
-
-if [ -z "${SKIP_SETUP}" ]; then
-  kind delete cluster --name probing-demo
-  kind create cluster --name probing-demo --config "${SCRATCH}/config"
-
-  docker pull "${APP_IMAGE}"
-  docker pull "${PROBE_IMAGE}"
-
-  kind load docker-image --name probing-demo "${APP_IMAGE}"
-  kind load docker-image --name probing-demo "${PROBE_IMAGE}"
-
-  kubectl wait node --for=condition=Ready --timeout=60s --all
-fi
-
-
-kind get kubeconfig --name probing-demo > "${SCRATCH}/kubeconfig"
-export KUBECONFIG="${SCRATCH}/kubeconfig"
-
 
 cat > "${SCRATCH}/regular-probe" <<EOF
 apiVersion: v1
@@ -97,10 +79,35 @@ spec:
         port: 8081
 EOF
 
-kubectl delete -f "${SCRATCH}/regular-probe" --ignore-not-found=true
+
+if [ -z "${SKIP_SETUP}" ]; then
+  kind delete cluster --name probing-demo
+  kind create cluster --name probing-demo --config "${SCRATCH}/config"
+
+  docker pull "${APP_IMAGE}"
+  docker pull "${PROBE_IMAGE}"
+
+  kind load docker-image --name probing-demo "${APP_IMAGE}"
+  kind load docker-image --name probing-demo "${PROBE_IMAGE}"
+
+  kubectl wait node --for=condition=Ready --timeout=60s --all
+
+  # Warm the cluster (ie. pull, unpack etc.)
+  for i in {1..3}
+  do
+    kubectl delete pods --all
+    kubectl apply -f "${SCRATCH}/regular-probe" -f "${SCRATCH}/aggressive-probe"
+    kubectl wait pod --for=condition=Ready --timeout=60s --all
+  done
+fi
+
+kind get kubeconfig --name probing-demo > "${SCRATCH}/kubeconfig"
+export KUBECONFIG="${SCRATCH}/kubeconfig"
+
+kubectl delete pods --all
 kubectl apply -f "${SCRATCH}/regular-probe"
 time kubectl wait pod --for=condition=Ready --timeout=20s -l app=regular-probe
 
-kubectl delete -f "${SCRATCH}/aggressive-probe" --ignore-not-found=true
+kubectl delete pods --all
 kubectl apply -f "${SCRATCH}/aggressive-probe"
 time kubectl wait pod --for=condition=Ready --timeout=20s -l app=aggressive-probe
