@@ -4,7 +4,7 @@ Knative Demo for KEP-20200921: Subsecond Probe Timeouts (TODO - link)
 
 ## Problem
 
-Knative is a serverless platform built on top of Kubernetes. These workloads scale to zero and come back up on demand to serve an HTTP request. A cold start occurs when a request arrives but the workload is not running. Thus we need to queue the request and wait for the workload to scale up. A factor in the queue time is length it takes the target Pod to report `Ready=True`. Because requests are buffered until the pod is ready this affects the experience of a user visiting a website or the SLA/SLOs of an API etc.
+Knative is a serverless platform built on top of Kubernetes. These workloads scale to zero and come back up on demand to serve an HTTP request. A cold start occurs when a request arrives but the workload is not running. Thus we need to queue the request and wait for the workload to scale up. A factor in the queue time is the length it takes the target Pod to report `Ready=True`. Because requests are buffered until the pod is ready this affects the experience of a user visiting a website or the SLA/SLOs of an API etc.
 
 Probes are used to determine Pod readiness and they currently have a lower-bound period of one second. As the KEP mentions:
 > Probe timeouts are limited to seconds and that does NOT work well for clients looking for finer and coarser grained timeouts.
