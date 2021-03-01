@@ -18,7 +18,12 @@ Knative currently works around this problem by delagating probing to a sidecar. 
 
 ![Knative Pod](images/pods.svg)
 
-## Usage
+## Demo
+
+This repository demonstrates the aforementioned approach without the need to install Knative
+
+
+### Usage
 
 1. Install [Kubernetes in Docker (KinD)](https://kind.sigs.k8s.io/)
 2. Run `./test.sh`
